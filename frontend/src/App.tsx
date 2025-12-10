@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register"; 
@@ -8,9 +9,10 @@ import MyJobs from "./pages/MyJobs";
 import Applications from "./pages/Applications";
 import Chat from "./pages/Chat";
 import Inbox from "./pages/Inbox"
+import Profile from "./pages/Profile"
+import MyApplications from "./pages/MyApplications"
 
-
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -24,6 +26,8 @@ function App() {
           <Route path="/applications/:jobId" element={<Applications />} />
           <Route path="/chat/:userId" element={<Chat />} />
           <Route path="/inbox" element={<Inbox />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-applications" element={<MyApplications />} />
         </Routes>
       </div>
     </Router>

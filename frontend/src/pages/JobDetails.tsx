@@ -1,34 +1,44 @@
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import AuthContext from "../context/AuthContext";
+import AuthContext, { User } from "../context/AuthContext";
 
-const JobDetails = () => {
-  const { id } = useParams(); // Get the ID from the URL
-  const { user } = useContext(AuthContext);
+interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  budget: number;
+  city: string;
+  category: string;
+  deadline: string;
+  createdAt: string;
+}
+
+const JobDetails: React.FC = () => {
+  const { id } = useParams<{ id: string }>(); 
+  // Cast context to include User type
+  const { user } = useContext(AuthContext) as { user: User | null };
   const navigate = useNavigate();
   
-  const [job, setJob] = useState(null);
-  const [coverLetter, setCoverLetter] = useState("");
+  const [job, setJob] = useState<Job | null>(null);
+  const [coverLetter, setCoverLetter] = useState<string>("");
 
   // Fetch Job Data
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/jobs`);
-        // Note: In a real app, you'd fetch /api/jobs/:id directly. 
-        // For now, we filter from the list or you can implement the single GET route.
-        // Let's assume we implement the single GET route in backend or filter here:
+        const res = await axios.get<Job[]>(`http://localhost:5000/api/jobs`);
+        // Finding the specific job from the list
         const foundJob = res.data.find(j => j._id === id);
-        setJob(foundJob);
+        setJob(foundJob || null);
       } catch (err) {
         console.error(err);
       }
     };
-    fetchJob();
+    if (id) fetchJob();
   }, [id]);
 
-  const handleApply = async (e) => {
+  const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
@@ -39,7 +49,7 @@ const JobDetails = () => {
       );
       alert("Application Sent Successfully!");
       navigate("/");
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.message || "Error applying");
     }
   };
@@ -89,7 +99,7 @@ const JobDetails = () => {
           <form onSubmit={handleApply}>
             <textarea
               className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              rows="4"
+              rows={4}
               placeholder="Write a short cover letter explaining why you are the best fit..."
               required
               value={coverLetter}

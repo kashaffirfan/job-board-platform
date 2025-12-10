@@ -63,3 +63,36 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      user.city = req.body.city || user.city;
+      
+      // Freelancer specific fields
+      if (req.body.skills) user.skills = req.body.skills; 
+      if (req.body.bio) user.bio = req.body.bio; // We need to add 'bio' to the User model schema first
+      if (req.body.portfolio) user.portfolio = req.body.portfolio; 
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        skills: updatedUser.skills,
+        bio: updatedUser.bio,
+        token: req.body.token // Keep existing token
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

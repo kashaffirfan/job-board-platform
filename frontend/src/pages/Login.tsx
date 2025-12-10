@@ -1,18 +1,28 @@
-import { useState, useContext } from "react";
-import AuthContext from "../context/AuthContext";
+import React, { useState, useContext } from "react";
+import AuthContext, { User } from "../context/AuthContext";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // <--- 1. Import this
+import { useNavigate } from "react-router-dom";
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate(); // <--- 2. Initialize the hook
+// Define Response Type
+interface LoginResponse {
+  user: User;
+  token: string;
+}
 
-  const handleSubmit = async (e) => {
+const Login: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  
+  // Cast Context
+  const authContext = useContext(AuthContext);
+  const login = authContext ? authContext.login : () => {}; 
+  
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await axios.post<LoginResponse>("http://localhost:5000/api/auth/login", {
         email,
         password,
       });
@@ -21,9 +31,9 @@ const Login = () => {
       login(res.data.user, res.data.token);
       
       alert("Login Successful!");
-      navigate("/"); // <--- 3. Redirect to Home Page
+      navigate("/");
       
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.message || "Login failed");
     }
   };

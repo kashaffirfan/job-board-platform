@@ -30,8 +30,12 @@ const userSchema = new mongoose.Schema({
   },
   bio: {
     type: String,
-    default: '',
-  },
+    default: "" },
+    
+  portfolio: { 
+    type: String, 
+    default: "" },
+
   experience: {
     type: String, 
     default: '',

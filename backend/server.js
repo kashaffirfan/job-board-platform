@@ -41,16 +41,16 @@ io.on('connection', (socket) => {
   });
 
   // 2. Handling Send Message
-  socket.on('send_message', async (data) => {
-    const { senderId, recipientId, content } = data;
+    socket.on('send_message', async (data) => {
+    const { senderId, recipientId, content } = data; 
 
-    // Save to Database
     try {
       const newMessage = await Message.create({
-        sender: senderId,
+        sender: senderId, 
         recipient: recipientId,
         content
       });
+      
 
       // Emit to Recipient (Real-time)
       io.to(recipientId).emit('receive_message', newMessage);

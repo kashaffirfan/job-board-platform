@@ -1,17 +1,33 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 
-const Applications = () => {
-  const { jobId } = useParams();
-  const [applications, setApplications] = useState([]);
+// Define Nested Interfaces
+interface Freelancer {
+  _id: string;
+  name: string;
+  email: string;
+  skills?: string[];
+}
+
+interface Application {
+  _id: string;
+  freelancer: Freelancer;
+  coverLetter: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+}
+
+const Applications: React.FC = () => {
+  const { jobId } = useParams<{ jobId: string }>();
+  const [applications, setApplications] = useState<Application[]>([]);
 
   // Fetch applications
   useEffect(() => {
     const fetchApp = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get(`http://localhost:5000/api/applications/job/${jobId}`, {
+        const res = await axios.get<Application[]>(`http://localhost:5000/api/applications/job/${jobId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setApplications(res.data);
@@ -19,11 +35,11 @@ const Applications = () => {
         console.error(err);
       }
     };
-    fetchApp();
+    if (jobId) fetchApp();
   }, [jobId]);
 
   // Handle Accept/Reject
-  const updateStatus = async (id, status) => {
+  const updateStatus = async (id: string, status: 'accepted' | 'rejected') => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(

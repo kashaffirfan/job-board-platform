@@ -1,13 +1,29 @@
-import { useState, useContext } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const PostJob = () => {
-  const { user } = useContext(AuthContext);
+interface JobFormData {
+  title: string;
+  description: string;
+  category: string;
+  budget: string;
+  deadline: string;
+  city: string;
+}
+
+const PostJob: React.FC = () => {
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+  
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    title: "", description: "", category: "Development", budget: "", deadline: "", city: ""
+  const [formData, setFormData] = useState<JobFormData>({
+    title: "", 
+    description: "", 
+    category: "Development", 
+    budget: "", 
+    deadline: "", 
+    city: ""
   });
 
   // Redirect if not a client
@@ -15,7 +31,7 @@ const PostJob = () => {
     return <div className="p-10 text-center text-red-500">Only Clients can post jobs.</div>;
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       // Get token from storage
@@ -28,7 +44,7 @@ const PostJob = () => {
       await axios.post("http://localhost:5000/api/jobs", formData, config);
       alert("Job Posted Successfully!");
       navigate("/"); // Go back to Home
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.message || "Error posting job");
     }
   };
@@ -41,18 +57,18 @@ const PostJob = () => {
           placeholder="Job Title" 
           className="w-full p-2 border rounded" 
           required 
-          onChange={e => setFormData({...formData, title: e.target.value})} 
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, title: e.target.value})} 
         />
         <textarea 
           placeholder="Description" 
           className="w-full p-2 border rounded h-32" 
           required 
-          onChange={e => setFormData({...formData, description: e.target.value})} 
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})} 
         />
         <div className="grid grid-cols-2 gap-4">
           <select 
             className="p-2 border rounded" 
-            onChange={e => setFormData({...formData, category: e.target.value})}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({...formData, category: e.target.value})}
           >
             <option value="Development">Development</option>
             <option value="Design">Design</option>
@@ -64,7 +80,7 @@ const PostJob = () => {
             placeholder="Budget ($)" 
             className="p-2 border rounded" 
             required 
-            onChange={e => setFormData({...formData, budget: e.target.value})} 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, budget: e.target.value})} 
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -72,13 +88,13 @@ const PostJob = () => {
             type="date" 
             className="p-2 border rounded" 
             required 
-            onChange={e => setFormData({...formData, deadline: e.target.value})} 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, deadline: e.target.value})} 
           />
           <input 
             placeholder="City (Local Only)" 
             className="p-2 border rounded" 
             required 
-            onChange={e => setFormData({...formData, city: e.target.value})} 
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, city: e.target.value})} 
           />
         </div>
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">

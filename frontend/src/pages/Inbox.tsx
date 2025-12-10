@@ -1,15 +1,22 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-const Inbox = () => {
-  const [conversations, setConversations] = useState([]);
+interface Conversation {
+  _id: string;
+  name: string;
+  lastMessage: string;
+  date: string;
+}
+
+const Inbox: React.FC = () => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
     const fetchConversations = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/chat/conversations", {
+        const res = await axios.get<Conversation[]>("http://localhost:5000/api/chat/conversations", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setConversations(res.data);

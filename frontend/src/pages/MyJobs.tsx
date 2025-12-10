@@ -1,25 +1,57 @@
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import AuthContext from "../context/AuthContext";
+import AuthContext, { User } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 
-const MyJobs = () => {
-  const { user } = useContext(AuthContext);
-  const [myJobs, setMyJobs] = useState([]);
+interface Job {
+  _id: string;
+  title: string;
+  category: string;
+  createdAt: string;
+  client: string | { _id: string }; // Handle populated vs unpopulated
+}
+
+const MyJobs: React.FC = () => {
+  const { user } = useContext(AuthContext) as { user: User | null };
+  const [myJobs, setMyJobs] = useState<Job[]>([]);
 
   useEffect(() => {
     const fetchMyJobs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/jobs");
-        // Filter jobs in frontend for now (Optimally, backend should have /api/jobs/myjobs)
-        const filteredJobs = res.data.filter(job => job.client._id === user.id || job.client === user.id);
-        setMyJobs(filteredJobs);
+        const res = await axios.get<Job[]>("http://localhost:5000/api/jobs");
+        
+        if (user) {
+            // Filter jobs locally
+            const filteredJobs = res.data.filter(job => {
+                const clientId = typeof job.client === 'object' ? job.client._id : job.client;
+                return String(clientId) === String(user.id || user._id);
+            });
+            setMyJobs(filteredJobs);
+        }
       } catch (err) {
         console.error(err);
       }
     };
     if (user) fetchMyJobs();
   }, [user]);
+
+  const handleDelete = async (jobId: string) => {
+    if (!window.confirm("Are you sure you want to delete this job?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/jobs/${jobId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Remove from UI instantly
+      setMyJobs(myJobs.filter(job => job._id !== jobId));
+      alert("Job deleted successfully");
+    } catch (err) {
+      alert("Error deleting job");
+      console.error(err);
+    }
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -40,7 +72,7 @@ const MyJobs = () => {
             </tr>
           </thead>
           <tbody>
-            {myJobs.map((job) => (
+            {myJobs.length > 0 ? myJobs.map((job) => (
               <tr key={job._id}>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <p className="text-gray-900 whitespace-no-wrap font-bold">{job.title}</p>
@@ -56,15 +88,19 @@ const MyJobs = () => {
                   >
                     View Applications
                   </Link>
-                  <button className="text-red-500 hover:text-red-700 text-xs font-bold">
+                  <button 
+                    onClick={() => handleDelete(job._id)}
+                    className="text-red-500 hover:text-red-700 text-xs font-bold"
+                  >
                     Delete
                   </button>
                 </td>
               </tr>
-            ))}
+            )) : (
+               <tr><td colSpan={3} className="p-5 text-center text-gray-500">You haven't posted any jobs yet.</td></tr>
+            )}
           </tbody>
         </table>
-        {myJobs.length === 0 && <div className="p-5 text-center text-gray-500">You haven't posted any jobs yet.</div>}
       </div>
     </div>
   );
