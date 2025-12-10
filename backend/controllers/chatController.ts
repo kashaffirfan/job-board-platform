@@ -1,8 +1,21 @@
-const Message = require('../models/Message');
+import { Response } from 'express';
+import Message from '../models/Message';
+import { AuthRequest } from '../middleware/authMiddleware';
+import { IUser } from '../models/User';
 
-exports.getMessages = async (req, res) => {
+interface Partner {
+  _id: string;
+  name: string;
+  email: string;
+  lastMessage: string;
+  date: Date;
+}
+
+export const getMessages = async (req: AuthRequest, res: Response) => {
   try {
-    const myId = req.user.id;
+    if (!req.user) return res.status(401).json({ message: "Not authorized" });
+
+    const myId = req.user._id; // In TS, use _id from the document
     const otherUserId = req.params.userId;
 
     const messages = await Message.find({
@@ -12,15 +25,16 @@ exports.getMessages = async (req, res) => {
       ]
     }).sort({ createdAt: 1 }); 
 
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    return res.json(messages);
+  } catch (error: any) {
+    return res.status(500).json({ message: error.message });
   }
 };
 
-exports.getConversations = async (req, res) => {
+export const getConversations = async (req: AuthRequest, res: Response) => {
   try {
-    const myId = req.user.id;
+    if (!req.user) return res.status(401).json({ message: "Not authorized" });
+    const myId = req.user._id.toString();
 
     // 1. Find all messages involving me
     const messages = await Message.find({
@@ -31,20 +45,20 @@ exports.getConversations = async (req, res) => {
     .sort({ createdAt: -1 });
 
     // 2. Filter for unique partners
-    const partnersMap = new Map();
+    const partnersMap = new Map<string, Partner>();
 
-    messages.forEach(msg => {
+    messages.forEach((msg: any) => {
       // Handle cases where populate might fail (deleted users)
       if (!msg.sender || !msg.recipient) return;
 
       const senderId = msg.sender._id.toString();
-      const recipientId = msg.recipient._id.toString();
       
       // Determine who the "other person" is
+      // If I am the sender, the partner is the recipient.
       const partner = senderId === myId ? msg.recipient : msg.sender;
       const partnerId = partner._id.toString();
 
-      // Only add to Map if not already present
+      // Only add to Map if not already present (since we sorted by date desc, first one is latest)
       if (!partnersMap.has(partnerId)) {
         partnersMap.set(partnerId, {
           _id: partner._id,
@@ -57,10 +71,10 @@ exports.getConversations = async (req, res) => {
     });
 
     const conversations = Array.from(partnersMap.values());
-    res.json(conversations);
+    return res.json(conversations);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Inbox Error:", error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
