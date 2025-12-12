@@ -5,12 +5,16 @@ import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import Message from './models/Message'; 
+import Notification from './models/Notification';
+import User from './models/User'; 
 
-// --- FIXED: Import routes using 'import' instead of 'require' ---
 import authRoutes from './routes/authRoutes';
 import jobRoutes from './routes/jobRoutes';
 import applicationRoutes from './routes/applicationRoutes';
 import chatRoutes from './routes/chatRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+
+import path from 'path';
 
 dotenv.config();
 
@@ -19,12 +23,13 @@ const server = http.createServer(app);
 
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- FIXED: Use the imported route variables ---
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Database Connection
 const mongoURI = process.env.MONGO_URI as string;
@@ -33,7 +38,6 @@ mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB Connected'))
   .catch((err) => console.error(err));
 
-// Socket.io Setup
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:5173", 
@@ -53,15 +57,32 @@ io.on('connection', (socket: Socket) => {
     const { senderId, recipientId, content } = data; 
 
     try {
+      // 1. Save Message to Database
       const newMessage = await Message.create({
         sender: senderId, 
         recipient: recipientId,
         content
       });
       
+      // 2. Emit Real-Time Message to Frontend
       io.to(recipientId).emit('receive_message', newMessage);
       io.to(senderId).emit('receive_message', newMessage);
+
+      // 3. Create Notification for the Recipient
+      // We look up the sender's name first to make the notification nice
+      const senderUser = await User.findById(senderId);
       
+      if (senderUser) {
+        await Notification.create({
+          recipient: recipientId,
+          sender: senderId,
+          type: 'new_message',
+          message: `New message from ${senderUser.name}`,
+          link: `/chat/${senderId}`,
+          read: false
+        });
+      }
+
     } catch (err) {
       console.error("Error saving message:", err);
     }

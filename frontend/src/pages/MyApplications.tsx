@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-// Define Types
 interface Job {
   _id: string;
   title: string;
@@ -9,7 +8,7 @@ interface Job {
 
 interface Application {
   _id: string;
-  job: Job | null; // Job might be null if deleted
+  job: Job | null; 
   status: 'pending' | 'accepted' | 'rejected';
   createdAt: string;
 }

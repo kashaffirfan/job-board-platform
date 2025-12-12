@@ -1,16 +1,14 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 
-// 1. Define the User Shape
 export interface User {
-  _id: string; // MongoDB ID
-  id?: string; // Fallback for some APIs
+  _id: string; 
+  id?: string; 
   name: string;
   email: string;
   role: 'client' | 'freelancer' | 'admin';
   skills?: string[];
 }
 
-// 2. Define Context Shape
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -18,7 +16,6 @@ interface AuthContextType {
   logout: () => void;
 }
 
-// Create Context with a default value of undefined (or null)
 const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {

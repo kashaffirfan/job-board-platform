@@ -1,157 +1,110 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import AuthContext from "../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; 
+import Notifications from '../components/Notifications';
+import { 
+  Box, Typography, TextField, Button, Card, CardContent, CardActions, Chip, Stack, MenuItem, InputAdornment, Paper, Container
+} from "@mui/material";
+import SearchIcon from '@mui/icons-material/Search';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
-// 1. Define Types for your data
-interface Job {
-  _id: string;
-  title: string;
-  category: string;
-  city: string;
-  description: string;
-  budget: number;
-}
-
-interface User {
-  name: string;
-  role: 'client' | 'freelancer' | 'admin'; // Adjust roles as needed
-}
-
-// 2. Define Context Type (Ideally this moves to your AuthContext file later)
-interface AuthContextType {
-  user: User | null;
-  logout: () => void;
-}
+interface Job { _id: string; title: string; category: string; city: string; description: string; budget: number; }
 
 const Home: React.FC = () => {
-  // We assert the context type here for now
-  const { user, logout } = useContext(AuthContext) as AuthContextType;
-  
-  // 3. Apply Types to State
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user;
+  const logout = authContext?.logout;
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [search, setSearch] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  const [search, setSearch] = useState(""); const [category, setCategory] = useState(""); const [city, setCity] = useState(""); const [minBudget, setMinBudget] = useState(""); const [maxBudget, setMaxBudget] = useState("");
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        let url = "http://localhost:5000/api/jobs?";
-        if (search) url += `search=${search}&`;
-        if (category) url += `category=${category}&`;
-
-        // TypeScript now knows res.data is an array of Job objects
-        const res = await axios.get<Job[]>(url);
+        const params = new URLSearchParams();
+        if (search) params.append("search", search); if (category) params.append("category", category); if (city) params.append("city", city); if (minBudget) params.append("minBudget", minBudget); if (maxBudget) params.append("maxBudget", maxBudget);
+        const res = await axios.get<Job[]>(`http://localhost:5000/api/jobs?${params.toString()}`);
         setJobs(res.data);
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-      }
+      } catch (err) { console.error(err); }
     };
+    const t = setTimeout(() => fetchJobs(), 500);
+    return () => clearTimeout(t);
+  }, [search, category, city, minBudget, maxBudget]); 
 
-    const timeoutId = setTimeout(() => {
-      fetchJobs();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [search, category]); 
-
-  // 4. Type the Event Handlers
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategory(e.target.value);
-  };
+  const handleLogout = () => { if(logout) { logout(); navigate('/login'); } };
 
   return (
-    <div className="container mx-auto p-6">
-      
-      {/* Header & Navigation */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Local Jobs</h1>
-        
-        <div className="space-x-4">
-          {user ? (
-            <>
-              <span className="text-gray-600">Hello, {user.name} ({user.role})</span>
-              <Link to="/inbox" className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 mx-2">Inbox</Link>
-              <Link to="/profile" className="text-gray-600 hover:text-blue-500 mr-4 font-bold">Profile</Link>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#F3F4F6', pb: 8 }}>
+      {/* NAVBAR */}
+      <Paper square elevation={1} sx={{ bgcolor: 'white', py: 2, px: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" maxWidth="lg" mx="auto">
+          <Typography variant="h5" fontWeight="900" color="primary">Local Jobs</Typography>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            {user ? (
+              <>
+                <Box sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
+                  <Typography variant="subtitle2" fontWeight="bold">{user.name}</Typography>
+                  <Typography variant="caption" color="text.secondary" textTransform="uppercase">{user.role}</Typography>
+                </Box>
+                <Notifications />
+                <Button component={Link} to="/inbox" variant="outlined" size="small">Inbox</Button>
+                <Button component={Link} to="/profile" color="inherit">Profile</Button>
+                {user.role === 'client' && <><Button component={Link} to="/post-job" variant="contained" color="secondary">+ Post Job</Button><Button component={Link} to="/my-jobs" color="inherit">My Jobs</Button></>}
+                {user.role === 'freelancer' && <Button component={Link} to="/my-applications" color="inherit">My Apps</Button>}
+                <Button onClick={handleLogout} color="error">Logout</Button>
+              </>
+            ) : (
+              <><Button component={Link} to="/login">Login</Button><Button component={Link} to="/register" variant="contained">Register</Button></>
+            )}
+          </Stack>
+        </Stack>
+      </Paper>
 
-              {user.role === 'client' && (
-                <>
-                  <Link to="/post-job" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Post Job</Link>
-                  <Link to="/my-jobs" className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ml-2">My Jobs</Link>
-                </>
-              )}
-              <button onClick={logout} className="text-red-500 hover:underline ml-4">Logout</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="bg-blue-500 text-white px-4 py-2 rounded">Login</Link>
-              <Link to="/register" className="bg-green-500 text-white px-4 py-2 rounded ml-2">Register</Link>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="bg-gray-100 p-4 rounded-lg mb-8 flex flex-col md:flex-row gap-4 shadow-sm">
-        <input 
-          type="text" 
-          placeholder="Search jobs (e.g. React, Logo Design)..." 
-          className="flex-1 p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={search}
-          onChange={handleSearchChange}
-        />
-        <select 
-          className="p-3 border rounded w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-          value={category}
-          onChange={handleCategoryChange}
-        >
-          <option value="">All Categories</option>
-          <option value="Development">Development</option>
-          <option value="Design">Design</option>
-          <option value="Marketing">Marketing</option>
-          <option value="Writing">Writing</option>
-        </select>
-      </div>
-
-      {/* Job List Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {jobs.length > 0 ? (
-          jobs.map((job) => (
-            <div key={job._id} className="bg-white p-6 shadow-md rounded-lg border border-gray-200 hover:shadow-lg transition flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-1">{job.title}</h3>
-                <p className="text-xs text-blue-500 font-bold uppercase mb-2">{job.category}</p>
-                <p className="text-sm text-gray-500 mb-3">{job.city}</p>
-                <p className="text-gray-600 line-clamp-3 mb-4">{job.description}</p>
-              </div>
-              
-              <div className="flex justify-between items-center mt-4 border-t pt-4">
-                <span className="font-bold text-green-600 text-lg">${job.budget}</span>
-                <Link to={`/job/${job._id}`} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                  View Details →
-                </Link>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-3 text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-            <p className="text-gray-500 text-lg">No jobs found matching your search.</p>
-            <button 
-              onClick={() => {setSearch(""); setCategory("");}} 
-              className="mt-2 text-blue-500 underline"
-            >
-              Clear Filters
-            </button>
-          </div>
-          
+      <Container maxWidth="lg" sx={{ mt: 5 }}>
+        {/* SEARCH BAR (Only for Freelancers) */}
+        {user?.role !== 'client' && (
+          <Paper elevation={0} sx={{ p: 3, mb: 5, borderRadius: 3, border: '1px solid #e0e0e0' }}>
+            <Stack spacing={2}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <TextField fullWidth placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
+                <TextField select fullWidth value={category} onChange={(e) => setCategory(e.target.value)} sx={{ minWidth: 200 }} SelectProps={{ displayEmpty: true }}>
+                    <MenuItem value="">All Categories</MenuItem><MenuItem value="Development">Development</MenuItem><MenuItem value="Design">Design</MenuItem>
+                </TextField>
+              </Stack>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <TextField fullWidth placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon /></InputAdornment> }} />
+                <Stack direction="row" spacing={2} sx={{ minWidth: 300 }}>
+                  <TextField fullWidth placeholder="Min $" type="number" value={minBudget} onChange={(e) => setMinBudget(e.target.value)} />
+                  <TextField fullWidth placeholder="Max $" type="number" value={maxBudget} onChange={(e) => setMaxBudget(e.target.value)} />
+                </Stack>
+              </Stack>
+            </Stack>
+          </Paper>
         )}
-      </div>
-    </div>
+
+        {/* JOB CARDS */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+          {jobs.map((job) => (
+            <Card key={job._id} elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 3, transition: '0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4, borderColor: 'primary.main' } }}>
+              <CardContent>
+                <Stack direction="row" justifyContent="space-between" mb={2}>
+                    <Chip label={job.category} size="small" color="primary" variant="filled" />
+                    <Typography variant="caption" display="flex" alignItems="center"><LocationOnIcon fontSize="inherit" /> {job.city}</Typography>
+                </Stack>
+                <Typography variant="h6" fontWeight="bold" noWrap>{job.title}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ height: 60, overflow: 'hidden', mb: 2 }}>{job.description}</Typography>
+              </CardContent>
+              <CardActions sx={{ px: 2, pb: 2, justifyContent: 'space-between' }}>
+                <Typography variant="h6" fontWeight="bold" color="secondary.main">${job.budget}</Typography>
+                <Button component={Link} to={`/job/${job._id}`} variant="contained" size="small" sx={{ borderRadius: 10 }}>View</Button>
+              </CardActions>
+            </Card>
+          ))}
+          {jobs.length === 0 && <Typography textAlign="center" width="100%">No jobs found.</Typography>}
+        </Box>
+      </Container>
+    </Box>
   );
 };
-
 export default Home;

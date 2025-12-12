@@ -83,19 +83,30 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
-      
+
+      // 1. Handle Image Upload
+      if (req.file) {
+        user.profilePicture = `/uploads/${req.file.filename}`;
+      }
+
       if (req.body.password) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(req.body.password, salt);
       }
       
+      // 2. Freelancer Logic
       if (user.role === 'freelancer') {
-        user.skills = req.body.skills || user.skills;
         user.bio = req.body.bio || user.bio;
         user.portfolio = req.body.portfolio || user.portfolio;
-      }
-      
-      if (user.role === 'client') {
+        // Handle skills array vs string
+        if (req.body.skills) {
+            user.skills = Array.isArray(req.body.skills) 
+              ? req.body.skills 
+              : req.body.skills.split(',').map((s: string) => s.trim());
+        }
+      } 
+      // 3. Client Logic (Fixes the Empty Profile issue)
+      else if (user.role === 'client') {
         user.companyName = req.body.companyName || user.companyName;
         user.companyDescription = req.body.companyDescription || user.companyDescription;
       }
@@ -103,14 +114,8 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       const updatedUser = await user.save();
 
       return res.json({
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        skills: updatedUser.skills,
-        bio: updatedUser.bio,
-        portfolio: updatedUser.portfolio,
-        token: req.headers.authorization?.split(' ')[1] 
+        ...updatedUser.toObject(),
+        token: req.headers.authorization?.split(' ')[1]
       });
     } else {
       return res.status(404).json({ message: 'User not found' });
