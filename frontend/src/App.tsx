@@ -3,8 +3,6 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { theme } from './theme';
-
-
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -19,7 +17,9 @@ import Inbox from './pages/Inbox';
 import Chat from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
 
+
 function App() {
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline /> 

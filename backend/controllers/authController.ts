@@ -3,6 +3,78 @@ import User from '../models/User';
 import bcrypt from 'bcryptjs'; 
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { OAuth2Client } from 'google-auth-library'; 
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); 
+
+export const googleLogin = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+
+    // 1. Verify the token with Google
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    if (!payload) return res.status(400).json({ message: "Invalid Google Token" });
+
+    const { email, name, picture } = payload;
+
+    // 2. Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // User exists -> Log them in
+      const secret = process.env.JWT_SECRET as string;
+      const appToken = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1d' });
+
+      return res.json({
+        token: appToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          role: user.role,
+          email: user.email,
+          profilePicture: user.profilePicture || picture // Use Google photo if available
+        }
+      });
+    } else {
+      // 3. User doesn't exist -> Create new account
+      // We generate a random password because they are using Google
+      const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        name,
+        email,
+        password: hashedPassword,
+        role: "freelancer", // Default role, they can change it later in profile
+        profilePicture: picture
+      });
+
+      const secret = process.env.JWT_SECRET as string;
+      const appToken = jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn: '1d' });
+
+      return res.status(201).json({
+        token: appToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          role: user.role,
+          email: user.email,
+          profilePicture: user.profilePicture
+        }
+      });
+    }
+
+  } catch (error: any) {
+    console.error(error);
+    return res.status(500).json({ message: "Google Login Failed" });
+  }
+};
 
 // Register User
 export const registerUser = async (req: Request, res: Response) => {

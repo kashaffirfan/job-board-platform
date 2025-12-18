@@ -1,59 +1,66 @@
 import { Response } from 'express';
 import Application from '../models/Application';
 import Job, { IJob } from '../models/Job';
-import Notification from '../models/Notification'; // <--- Vital Import
+import Notification from '../models/Notification'; 
 import { AuthRequest } from '../middleware/authMiddleware';
 
-// Apply for Job
-export const applyForJob = async (req: AuthRequest, res: Response) => {
+// 1. Create Application (Handles Resume Upload + Notification)
+export const createApplication = async (req: AuthRequest, res: Response) => {
   try {
     const { jobId, coverLetter } = req.body;
-    if (!req.user) return res.status(401).json({ message: 'Not authorized' });
-
-    if (req.user.role !== 'freelancer') {
-      return res.status(403).json({ message: 'Only freelancers can apply' });
+    
+    // Check if file exists (Resume)
+    let resumePath = "";
+    if (req.file) {
+        resumePath = `/uploads/${req.file.filename}`;
     }
 
-    const existingApplication = await Application.findOne({
-      job: jobId,
-      freelancer: req.user._id
+    // Check existing application
+    const existingApp = await Application.findOne({ 
+        job: jobId, 
+        freelancer: req.user?._id 
     });
-    if (existingApplication) {
-      return res.status(400).json({ message: 'You have already applied to this job' });
+    
+    if (existingApp) {
+        return res.status(400).json({ message: 'You have already applied to this job' });
     }
 
     const application = await Application.create({
       job: jobId,
-      freelancer: req.user._id,
-      coverLetter
+      freelancer: req.user?._id,
+      coverLetter,
+      resume: resumePath,
+      status: 'pending'
     });
 
-    // --- NOTIFICATION LOGIC ---
+    // --- NOTIFICATION LOGIC (Notify Client) ---
     const job = await Job.findById(jobId);
     if (job) {
         await Notification.create({
             recipient: job.client, // Notify the Client
-            sender: req.user._id,  // From Freelancer
+            sender: req.user?._id, // From Freelancer
             type: 'application_received',
-            message: `${req.user.name} applied for: ${job.title}`,
-            link: `/applications/${job._id}`
+            message: `${req.user?.name} applied for: ${job.title}`,
+            link: `/applications/${job._id}`,
+            read: false
         });
     }
-    // -------------------------
+    // ------------------------------------------
 
-    return res.status(201).json(application);
+    res.status(201).json(application);
   } catch (error: any) {
-    return res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Get Applications for a Job
-export const getJobApplications = async (req: AuthRequest, res: Response) => {
+// 2. Get Applications for a Job (Client View)
+export const getApplicationsForJob = async (req: AuthRequest, res: Response) => {
   try {
     const job = await Job.findById(req.params.jobId);
     
     if (!job) return res.status(404).json({ message: 'Job not found' });
     
+    // Authorization Check
     if (!req.user || job.client.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to view these applications' });
     }
@@ -67,7 +74,7 @@ export const getJobApplications = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Update Status (Accept/Reject)
+// 3. Update Status (Accept/Reject)
 export const updateApplicationStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body; 
@@ -84,17 +91,18 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
     application.status = status;
     await application.save();
 
-    // --- NOTIFICATION LOGIC ---
+    // --- NOTIFICATION LOGIC (Notify Freelancer) ---
     if (status === 'accepted' || status === 'rejected') {
         await Notification.create({
             recipient: application.freelancer, // Notify Freelancer
-            sender: req.user!._id,             // From Client
+            sender: req.user._id,              // From Client
             type: `application_${status}`,
             message: `Your application for ${job.title} was ${status}`,
-            link: `/my-applications`
+            link: `/my-applications`,
+            read: false
         });
     }
-    // -------------------------
+    // ----------------------------------------------
 
     return res.json({ message: `Application ${status}`, application });
   } catch (error: any) {
@@ -102,7 +110,7 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
   }
 };
 
-// Get My Applications (Freelancer)
+// 4. Get My Applications (Freelancer View)
 export const getMyApplications = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) return res.status(401).json({ message: 'Not authorized' });

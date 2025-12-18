@@ -1,35 +1,38 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import AuthContext from "../context/AuthContext"; // Removed unused 'User' import
 import { Link } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
+import { 
+  Box, Typography, Button, Card, CardContent, CardActions, Chip, Stack, Container, IconButton 
+} from "@mui/material";
+import { toast } from "react-toastify";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PeopleIcon from '@mui/icons-material/People';
+import WorkIcon from '@mui/icons-material/Work';
 
-// Define the Job interface locally
 interface Job {
   _id: string;
   title: string;
   category: string;
+  budget: number;
+  city: string;
   createdAt: string;
-  client: string | { _id: string };
 }
 
 const MyJobs: React.FC = () => {
+  const [myJobs, setMyJobs] = useState<Job[]>([]);
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
-
-  const [myJobs, setMyJobs] = useState<Job[]>([]);
 
   useEffect(() => {
     const fetchMyJobs = async () => {
       try {
-        const res = await axios.get<Job[]>("http://localhost:5000/api/jobs");
-        
-        if (user) {
-            const filteredJobs = res.data.filter(job => {
-                const clientId = typeof job.client === 'object' ? job.client._id : job.client;
-                return String(clientId) === String(user.id || user._id);
-            });
-            setMyJobs(filteredJobs);
-        }
+        const token = localStorage.getItem("token");
+        const res = await axios.get<Job[]>("http://localhost:5000/api/jobs/myjobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setMyJobs(res.data);
       } catch (err) {
         console.error(err);
       }
@@ -37,70 +40,82 @@ const MyJobs: React.FC = () => {
     if (user) fetchMyJobs();
   }, [user]);
 
-  const handleDelete = async (jobId: string) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/jobs/${jobId}`, {
+      await axios.delete(`http://localhost:5000/api/jobs/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMyJobs(myJobs.filter(job => job._id !== jobId));
-      alert("Job deleted successfully");
+      setMyJobs(myJobs.filter(job => job._id !== id));
+      toast.success("Job Deleted Successfully");
     } catch (err) {
-      alert("Error deleting job");
+      toast.error("Error deleting job");
     }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">My Job Postings</h1>
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full leading-normal">
-          <thead>
-            <tr>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Job Title</th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Posted Date</th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {myJobs.length > 0 ? myJobs.map((job) => (
-              <tr key={job._id}>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 font-bold">{job.title}</p>
-                  <p className="text-gray-500">{job.category}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  {new Date(job.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <Link 
-                    to={`/edit-job/${job._id}`}
-                    className="text-green-500 hover:text-green-700 text-xs font-bold mr-3"
-                  >
-                    Edit
-                  </Link>
-                  <Link 
-                    to={`/applications/${job._id}`} 
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-xs mr-2"
-                  >
-                    View Applications
-                  </Link>
-                  <button 
-                    onClick={() => handleDelete(job._id)}
-                    className="text-red-500 hover:text-red-700 text-xs font-bold"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            )) : (
-               <tr><td colSpan={3} className="p-5 text-center text-gray-500">You haven't posted any jobs yet.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <Container maxWidth="lg" sx={{ mt: 5, mb: 10 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={5}>
+        <Box>
+            <Typography variant="h4" fontWeight="bold">My Posted Jobs</Typography>
+            <Typography variant="body2" color="text.secondary">Manage your active listings and applicants</Typography>
+        </Box>
+        <Button 
+            component={Link} 
+            to="/post-job" 
+            variant="contained" 
+            startIcon={<WorkIcon />}
+            sx={{ fontWeight: 'bold' }}
+        >
+            Post New Job
+        </Button>
+      </Stack>
+
+      <Stack spacing={3}>
+        {myJobs.length > 0 ? (
+          myJobs.map((job) => (
+            <Card key={job._id} elevation={2} sx={{ borderRadius: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+              <CardContent sx={{ flex: 1 }}>
+                <Stack direction="row" spacing={1} mb={1}>
+                    <Chip label={job.category} size="small" color="primary" variant="outlined" />
+                    <Chip label={job.city} size="small" variant="outlined" />
+                </Stack>
+                <Typography variant="h6" fontWeight="bold">{job.title}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                    Posted on: {new Date(job.createdAt).toLocaleDateString()} • Budget: ${job.budget}
+                </Typography>
+              </CardContent>
+              
+              <CardActions>
+                <Stack direction="row" spacing={1}>
+                    <Button 
+                        component={Link} 
+                        to={`/applications/${job._id}`} 
+                        variant="outlined" 
+                        size="small" 
+                        startIcon={<PeopleIcon />}
+                    >
+                        Applicants
+                    </Button>
+                    <IconButton component={Link} to={`/edit-job/${job._id}`} color="primary">
+                        <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(job._id)} color="error">
+                        <DeleteIcon />
+                    </IconButton>
+                </Stack>
+              </CardActions>
+            </Card>
+          ))
+        ) : (
+          <Box textAlign="center" py={10} bgcolor="#F9FAFB" borderRadius={3}>
+            <Typography variant="h6" color="text.secondary">You haven't posted any jobs yet.</Typography>
+            <Button component={Link} to="/post-job" variant="text" sx={{ mt: 1 }}>Get Started</Button>
+          </Box>
+        )}
+      </Stack>
+    </Container>
   );
 };
 

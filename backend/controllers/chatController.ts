@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import Message from '../models/Message';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { IUser } from '../models/User';
 
 interface Partner {
   _id: string;
