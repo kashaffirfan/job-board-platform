@@ -4,7 +4,16 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Job from '../models/Job';
 import User from '../models/User';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+// ⚠️ PASTE YOUR KEY HERE. 
+// It must be one long string. It should NOT have "..." in the middle.
+const MY_KEY = "AIzaSyBrQ2xKpvtS6IDemQ77QgH5BQfM7Y8WsTg"; // <--- REPLACE THIS with your full key
+
+// 👇 DEBUG: This will print the key to your terminal when you save
+console.log("------------------------------------------------");
+console.log("DEBUG CHECK: The key being used is:", MY_KEY);
+console.log("------------------------------------------------");
+
+const genAI = new GoogleGenerativeAI(MY_KEY);
 
 export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
   try {
@@ -21,27 +30,14 @@ export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
 
     // 2. Construct the Prompt
     const prompt = `
-      Write a professional, persuasive, and concise cover letter for a freelancer applying to a job.
-      
-      JOB DETAILS:
-      - Title: ${job.title}
-      - Description: ${job.description}
-      - Category: ${job.category}
-      
-      FREELANCER PROFILE:
-      - Name: ${freelancer.name}
-      - Skills: ${freelancer.skills ? freelancer.skills.join(', ') : 'General Freelancer'}
-      - Bio: ${freelancer.bio || 'Hardworking and dedicated professional.'}
-      
-      INSTRUCTIONS:
-      - Keep it under 200 words.
-      - Highlight why the freelancer's skills match the job description.
-      - Use a professional but enthusiastic tone.
-      - Do not include placeholders like "[Your Phone Number]"; assume the platform handles contact info.
+      Write a professional cover letter for a freelancer applying to a job.
+      JOB: ${job.title} - ${job.description}
+      FREELANCER: ${freelancer.name} - Skills: ${freelancer.skills?.join(', ')}
+      Keep it under 200 words.
     `;
 
     // 3. Call Gemini API
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
@@ -49,7 +45,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-pro" });
     res.json({ coverLetter: text });
 
   } catch (error: any) {
-    console.error("AI Error:", error);
+    console.error("AI Error:", error.message); // Print the real error
     res.status(500).json({ message: "Failed to generate cover letter" });
   }
 };
