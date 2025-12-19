@@ -69,7 +69,7 @@ const Home: React.FC = () => {
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                 <TextField fullWidth placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }} />
                 <TextField select fullWidth value={category} onChange={(e) => setCategory(e.target.value)} sx={{ minWidth: 200 }} SelectProps={{ displayEmpty: true }}>
-                    <MenuItem value="">All Categories</MenuItem><MenuItem value="Development">Development</MenuItem><MenuItem value="Design">Design</MenuItem>
+                    <MenuItem value="">All Categories</MenuItem><MenuItem value="Development">Development</MenuItem><MenuItem value="Marketing">Marketing</MenuItem><MenuItem value="Design">Design</MenuItem><MenuItem value="Writing">Writing</MenuItem>
                 </TextField>
               </Stack>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
