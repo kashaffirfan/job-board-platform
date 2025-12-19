@@ -23,7 +23,13 @@ const app: Application = express();
 const server = http.createServer(app);
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://job-board-platform-tau.vercel.app" 
+  ],
+  credentials: true
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
