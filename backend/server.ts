@@ -16,8 +16,10 @@ import notificationRoutes from './routes/notificationRoutes';
 import aiRoutes from './routes/aiRoutes';
 
 import path from 'path';
-
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+console.log("------------------------------------------------");
+console.log("✅ DEBUG: Loaded API Key:", process.env.GEMINI_API_KEY ? "YES (Key Found)" : "NO (Still Missing)");
+console.log("------------------------------------------------");
 
 const app: Application = express();
 const server = http.createServer(app);
