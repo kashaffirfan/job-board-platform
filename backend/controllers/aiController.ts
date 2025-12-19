@@ -40,7 +40,8 @@ export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
-      Write a professional cover letter for a freelancer applying to a job.
+      Write a professional cover letter for a freelancer applying to a job without subject line.
+      Use the following details:
       JOB: ${job.title} - ${job.description}
       FREELANCER: ${freelancer.name} - Skills: ${freelancer.skills?.join(', ')}
       Keep it under 200 words.
