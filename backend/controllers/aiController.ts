@@ -4,13 +4,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Job from '../models/Job';
 import User from '../models/User';
 
-const MY_KEY = process.env.GEMINI_API_KEY as string; 
+const MY_KEY = "AIzaSyBrQ2xKpvtS6IDemQ77QgH5BQfM7Y8WsTg"; 
 
 console.log("------------------------------------------------");
 console.log("DEBUG CHECK: The key being used is:", MY_KEY);
 console.log("------------------------------------------------");
 
-const genAI = new GoogleGenerativeAI(MY_KEY);
+const genAI = new GoogleGenerativeAI("AIzaSyBrQ2xKpvtS6IDemQ77QgH5BQfM7Y8WsTg");
 
 export const generateCoverLetter = async (req: AuthRequest, res: Response) => {
   try {

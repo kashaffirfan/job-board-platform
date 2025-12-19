@@ -17,9 +17,9 @@ interface Message {
 }
 
 const socket: Socket = io(import.meta.env.VITE_API_URL);
+
 const Chat: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
-  // Safe Context Access
   const authContext = useContext(AuthContext);
   const user = authContext?.user;
 
@@ -53,14 +53,24 @@ const Chat: React.FC = () => {
     if (userId) fetchHistory();
   }, [userId]);
 
+  // THIS LISTENER HANDLES INCOMING MESSAGES (BOTH YOURS AND THEIRS)
   useEffect(() => {
     const handleReceiveMessage = (data: Message) => {
       if (!user || !userId) return;
+
+      // We add the message if it belongs to this conversation
+      // (Either sent by the other person, OR sent by me to them)
       const senderId = typeof data.sender === 'object' ? data.sender._id : data.sender;
-      if (String(senderId) === String(userId) || String(senderId) === String(user.id || (user as any)._id)) {
+      
+      // Check if message is part of this chat context
+      const isFromCurrentContact = String(senderId) === String(userId);
+      const isFromMe = String(senderId) === String(user.id || (user as any)._id);
+
+      if (isFromCurrentContact || isFromMe) {
         setMessages((prev) => [...prev, data]);
       }
     };
+
     socket.on("receive_message", handleReceiveMessage);
     return () => { socket.off("receive_message", handleReceiveMessage); };
   }, [userId, user]);
@@ -71,10 +81,19 @@ const Chat: React.FC = () => {
 
   const sendMessage = async () => {
     if (newMessage.trim() === "" || !user || !userId) return;
+    
     const myId = user.id || (user as any)._id;
     const messageData = { senderId: myId, recipientId: userId, content: newMessage };
+    
+    // 1. Send to server
     socket.emit("send_message", messageData);
+    
+    // 2. Clear input
     setNewMessage(""); 
+    
+    // 3. REMOVED: setMessages(...) 
+    // We do NOT add it here manually. We wait for the socket.on("receive_message") 
+    // above to catch it coming back from the server. This fixes the duplicate.
   };
 
   return (
@@ -97,7 +116,7 @@ const Chat: React.FC = () => {
         elevation={0} 
         sx={{ 
             flexGrow: 1, 
-            bgcolor: '#f0f2f5', // WhatsApp-like background
+            bgcolor: '#f0f2f5', 
             p: 3, 
             overflowY: 'auto', 
             borderRadius: 2,
