@@ -41,8 +41,7 @@ const PostJob: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/jobs", formData, { headers: { Authorization: `Bearer ${token}` } });
-      toast.success("Job Posted Successfully!");
+await axios.post(`${import.meta.env.VITE_API_URL}/api/jobs`, formData, { headers: { Authorization: `Bearer ${token}` } });      toast.success("Job Posted Successfully!");
       navigate("/");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Error posting job");

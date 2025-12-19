@@ -41,7 +41,7 @@ const Profile: React.FC = () => {
         companyDescription: (user as any).companyDescription || ""
       });
       if ((user as any).profilePicture) {
-        setPreview(`http://localhost:5000${(user as any).profilePicture}`);
+setPreview(`${import.meta.env.VITE_API_URL}${(user as any).profilePicture}`);
       }
     }
   }, [user]);
@@ -78,7 +78,7 @@ const Profile: React.FC = () => {
           data.append('companyDescription', formData.companyDescription);
       }
 
-      const res = await axios.put("http://localhost:5000/api/auth/profile", data, {
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/auth/profile`, data, {
         headers: { 
             Authorization: `Bearer ${token}`, 
             'Content-Type': 'multipart/form-data' 

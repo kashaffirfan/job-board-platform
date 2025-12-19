@@ -29,8 +29,8 @@ const MyJobs: React.FC = () => {
     const fetchMyJobs = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get<Job[]>("http://localhost:5000/api/jobs/myjobs", {
-          headers: { Authorization: `Bearer ${token}` }
+const res = await axios.get<Job[]>(`${import.meta.env.VITE_API_URL}/api/jobs/myjobs`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
         setMyJobs(res.data);
       } catch (err) {
@@ -44,8 +44,8 @@ const MyJobs: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/jobs/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+          await axios.delete(`${import.meta.env.VITE_API_URL}/api/jobs/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
       });
       setMyJobs(myJobs.filter(job => job._id !== id));
       toast.success("Job Deleted Successfully");

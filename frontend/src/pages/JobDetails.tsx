@@ -27,8 +27,7 @@ const JobDetails: React.FC = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/jobs`);
-        const foundJob = res.data.find((j: any) => j._id === id);
+const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/jobs`);        const foundJob = res.data.find((j: any) => j._id === id);
         setJob(foundJob || null);
       } catch (err) { console.error(err); }
     };
@@ -57,7 +56,7 @@ const JobDetails: React.FC = () => {
       formData.append("coverLetter", coverLetter);
       formData.append("resume", resume); // Append file
 
-      await axios.post("http://localhost:5000/api/applications", formData, { 
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/applications`, formData, { 
         headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data" // Critical for file upload
@@ -77,7 +76,7 @@ const JobDetails: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:5000/api/ai/generate-cover-letter",
+        `${import.meta.env.VITE_API_URL}/api/ai/generate-cover-letter`,
         { jobId: id },
         { headers: { Authorization: `Bearer ${token}` } }
       );

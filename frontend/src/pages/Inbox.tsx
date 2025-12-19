@@ -21,7 +21,7 @@ const Inbox: React.FC = () => {
     const fetchConversations = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get<Conversation[]>("http://localhost:5000/api/chat/conversations", {
+        const res = await axios.get<Conversation[]>(`${import.meta.env.VITE_API_URL}/api/chat/conversations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setConversations(res.data);

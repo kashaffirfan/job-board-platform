@@ -20,9 +20,9 @@ const Applications: React.FC = () => {
     const fetchApp = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get<Application[]>(`http://localhost:5000/api/applications/job/${jobId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+       const res = await axios.get<Application[]>(`${import.meta.env.VITE_API_URL}/api/applications/job/${jobId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+});
         setApplications(res.data);
       } catch (err) {
         console.error(err);
@@ -34,9 +34,9 @@ const Applications: React.FC = () => {
   const updateStatus = async (id: string, status: 'accepted' | 'rejected') => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:5000/api/applications/${id}/status`, { status }, { 
-          headers: { Authorization: `Bearer ${token}` } 
-      });
+await axios.put(`${import.meta.env.VITE_API_URL}/api/applications/${id}/status`, { status }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       setApplications(apps => apps.map(app => app._id === id ? { ...app, status } : app));
       toast.success(`Application ${status}`);
     } catch (err) {

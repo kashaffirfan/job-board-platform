@@ -22,9 +22,9 @@ const Notifications: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const res = await axios.get('http://localhost:5000/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/notifications`, {
+    headers: { Authorization: `Bearer ${token}` }
+});
       setNotifications(res.data);
     } catch (err) {
       console.error(err);
@@ -42,9 +42,9 @@ const Notifications: React.FC = () => {
   const handleRead = async (id: string) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/notifications/${id}/read`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+});
       
       // Update UI locally
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));

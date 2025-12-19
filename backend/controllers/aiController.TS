@@ -4,11 +4,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Job from '../models/Job';
 import User from '../models/User';
 
-// ⚠️ PASTE YOUR KEY HERE. 
-// It must be one long string. It should NOT have "..." in the middle.
-const MY_KEY = process.env.GEMINI_API_KEY as string; // <--- REPLACE THIS with your full key
+const MY_KEY = process.env.GEMINI_API_KEY as string; 
 
-// 👇 DEBUG: This will print the key to your terminal when you save
 console.log("------------------------------------------------");
 console.log("DEBUG CHECK: The key being used is:", MY_KEY);
 console.log("------------------------------------------------");

@@ -31,7 +31,7 @@ const EditJob: React.FC = () => {
   useEffect(() => {
     const fetchJob = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/jobs`); 
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/jobs`);
             const job = res.data.find((j: any) => j._id === id);
             
             if (job) {
@@ -68,8 +68,8 @@ const EditJob: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:5000/api/jobs/${id}`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
+  await axios.put(`${import.meta.env.VITE_API_URL}/api/jobs/${id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Job Updated Successfully!");
       navigate("/my-jobs");

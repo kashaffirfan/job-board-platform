@@ -20,8 +20,8 @@ const MyApplications: React.FC = () => {
     const fetchApps = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get<Application[]>("http://localhost:5000/api/applications/my-applications", {
-          headers: { Authorization: `Bearer ${token}` }
+const res = await axios.get<Application[]>(`${import.meta.env.VITE_API_URL}/api/applications/my-applications`, {
+            headers: { Authorization: `Bearer ${token}` }
         });
         setApps(res.data);
       } catch (err) {

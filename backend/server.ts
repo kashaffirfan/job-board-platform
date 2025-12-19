@@ -42,8 +42,10 @@ mongoose.connect(mongoURI)
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", 
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:5173", 
+    "https://job-board-platform-tau.vercel.app"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 

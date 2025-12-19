@@ -24,7 +24,7 @@ const Home: React.FC = () => {
       try {
         const params = new URLSearchParams();
         if (search) params.append("search", search); if (category) params.append("category", category); if (city) params.append("city", city); if (minBudget) params.append("minBudget", minBudget); if (maxBudget) params.append("maxBudget", maxBudget);
-        const res = await axios.get<Job[]>(`http://localhost:5000/api/jobs?${params.toString()}`);
+        const res = await axios.get<Job[]>(`${import.meta.env.VITE_API_URL}/api/jobs?${params.toString()}`);
         setJobs(res.data);
       } catch (err) { console.error(err); }
     };

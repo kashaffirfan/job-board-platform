@@ -16,8 +16,7 @@ interface Message {
   createdAt: string;
 }
 
-const socket: Socket = io("http://localhost:5000");
-
+const socket: Socket = io(import.meta.env.VITE_API_URL);
 const Chat: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   // Safe Context Access
@@ -45,7 +44,7 @@ const Chat: React.FC = () => {
     const fetchHistory = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get<Message[]>(`http://localhost:5000/api/chat/${userId}`, {
+        const res = await axios.get<Message[]>(`${import.meta.env.VITE_API_URL}/api/chat/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMessages(res.data);
