@@ -3,7 +3,6 @@ node_modules/
 package-lock.json
 
 # Environment Variables (Keep secrets safe!)
-.env
 
 # Build Outputs
 dist/
@@ -17,3 +16,7 @@ yarn-error.log*
 # OS Generated Files
 .DS_Store
 Thumbs.db
+config.bat
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
