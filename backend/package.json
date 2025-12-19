@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "ts-node server.ts",
-    "dev": "nodemon server.ts"
-  },
+    "start": "node --max-old-space-size=460 -r ts-node/register server.ts",
+    "dev": "nodemon server.ts",
+    "build": "tsc"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
